@@ -1,5 +1,5 @@
 // components/Chart.jsx  
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 
 const Chart = () => {
   const canvasRef = useRef(null);
@@ -9,7 +9,7 @@ const Chart = () => {
   const timeRef = useRef(0);
 
   // 완전히 재설계된 이벤트 데이터 - 파란색과 금색 톤만 사용
-  const events = [
+  const events = useMemo(() => [
     {
       id: 'start',
       order: 1,
@@ -125,7 +125,7 @@ const Chart = () => {
       description: '핍박 강화로 신천지 오픈 안하고 3개월 뒤 오픈. 42년 3월 한달 뒤 등록 시작',
       achievement: '위기 속에서도 12지파 중 앞서나가는 중'
     }
-  ];
+  ], []);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -155,42 +155,59 @@ const Chart = () => {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    canvas.width = dimensions.width;
-    canvas.height = dimensions.height;
+    
+    // devicePixelRatio를 가져와서 고해상도 대응
+    const dpr = window.devicePixelRatio || 1;
+    
+    // 캔버스 크기를 dpr에 맞춰 설정
+    canvas.width = dimensions.width * dpr;
+    canvas.height = dimensions.height * dpr;
+    
+    // CSS 크기는 원래대로 유지
+    canvas.style.width = dimensions.width + 'px';
+    canvas.style.height = dimensions.height + 'px';
+    
+    // 컨텍스트를 dpr에 맞춰 스케일링
+    ctx.scale(dpr, dpr);
 
     const animate = () => {
       timeRef.current += 0.003;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height);
 
       // 그리드 라인 (더 선명하게)
       ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
       ctx.lineWidth = 1;
       
+      // Y축 범위를 화면에 맞춰 조정 (하단 X축 공간 80px 확보)
+      const chartBottom = dimensions.height - 80;
+      const chartTop = 10;
+      const chartHeight = chartBottom - chartTop;
+      
       [0, 100, 200, 300].forEach(value => {
-        const y = canvas.height - (value / 300) * canvas.height * 0.60 - canvas.height * 0.20;
+        const y = chartBottom - (value / 300) * chartHeight;
         ctx.beginPath();
         ctx.setLineDash([5, 10]);
         ctx.moveTo(20, y);
-        ctx.lineTo(canvas.width - 5, y);
+        ctx.lineTo(dimensions.width, y);  // 화면 끝까지
         ctx.stroke();
       });
       ctx.setLineDash([]);
 
       // 메인 그래프 라인 (굵고 선명하게)
       const points = events.map(event => ({
-        x: (event.position.x / 100) * canvas.width,
-        y: canvas.height - (event.growth / 300) * canvas.height * 0.60 - canvas.height * 0.20
+        x: (event.position.x / 100) * dimensions.width,
+        y: chartBottom - (event.growth / 300) * chartHeight
       }));
       
       // 미래 예측선 추가 (우상향, 오른쪽 끝까지)
       const lastPoint = points[points.length - 1];
       points.push({
-        x: canvas.width * 0.94,
+        x: dimensions.width * 0.94,
         y: lastPoint.y - 25  // 위로 상승
       });
       points.push({
-        x: canvas.width * 0.98,  // 거의 끝까지
+        x: dimensions.width - 2,  // 화면 끝까지 (2px 여백만)
         y: lastPoint.y - 50  // 더 위로 상승
       });
 
@@ -204,11 +221,11 @@ const Chart = () => {
         const cp2y = points[i].y;
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, points[i].x, points[i].y);
       }
-      ctx.lineTo(points[points.length - 1].x, canvas.height - canvas.height * 0.20);
-      ctx.lineTo(points[0].x, canvas.height - canvas.height * 0.20);
+      ctx.lineTo(points[points.length - 1].x, chartBottom);
+      ctx.lineTo(points[0].x, chartBottom);
       ctx.closePath();
 
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, 0, dimensions.height);
       gradient.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
       gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
       ctx.fillStyle = gradient;
@@ -225,7 +242,7 @@ const Chart = () => {
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, points[i].x, points[i].y);
       }
       
-      const lineGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      const lineGradient = ctx.createLinearGradient(0, 0, dimensions.width, 0);
       lineGradient.addColorStop(0, '#3B82F6');
       lineGradient.addColorStop(0.5, '#FCD34D');
       lineGradient.addColorStop(1, '#F59E0B');
@@ -263,24 +280,28 @@ const Chart = () => {
       points.slice(0, -2).forEach((point, index) => {
         const event = events[index];
         
-        // 외부 링
+        // 정확한 원을 그리기 위해 소수점 제거
+        const centerX = Math.round(point.x);
+        const centerY = Math.round(point.y);
+        
+        // 외부 링 (정원으로 그리기)
         if (event.highlight) {
           ctx.beginPath();
-          ctx.arc(point.x, point.y, 15, 0, Math.PI * 2);
+          ctx.arc(centerX, centerY, 15, 0, Math.PI * 2, false);
           ctx.strokeStyle = event.color;
           ctx.lineWidth = 3;
           ctx.stroke();
         }
         
-        // 메인 포인트
+        // 메인 포인트 (정원으로 그리기)
         ctx.beginPath();
-        ctx.arc(point.x, point.y, event.highlight ? 10 : 8, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, event.highlight ? 10 : 8, 0, Math.PI * 2, false);
         ctx.fillStyle = event.color;
         ctx.fill();
         
-        // 내부 점
+        // 내부 점 (정원으로 그리기)
         ctx.beginPath();
-        ctx.arc(point.x, point.y, event.highlight ? 5 : 4, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, event.highlight ? 5 : 4, 0, Math.PI * 2, false);
         ctx.fillStyle = 'white';
         ctx.fill();
       });
@@ -288,8 +309,10 @@ const Chart = () => {
       // 움직이는 포인트 (현재 위치 표시)
       const currentPoint = points[points.length - 3]; // 실제 마지막 이벤트 포인트
       const pulseSize = 12 + Math.sin(timeRef.current * 3) * 3;
+      const currentCenterX = Math.round(currentPoint.x);
+      const currentCenterY = Math.round(currentPoint.y);
       ctx.beginPath();
-      ctx.arc(currentPoint.x, currentPoint.y, pulseSize, 0, Math.PI * 2);
+      ctx.arc(currentCenterX, currentCenterY, pulseSize, 0, Math.PI * 2, false);
       ctx.strokeStyle = '#F59E0B';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -330,21 +353,57 @@ const Chart = () => {
         // 모든 카드 넓이 통일
         const cardWidth = 'w-72';
         
-        // 1-5번 카드는 위로 (상단 공간 활용), 6-8번 카드는 아래로 (하단 공간 활용)
+        // 화면 높이에 따른 동적 카드 배치
+        const viewportHeight = dimensions.height || 600;
+        
+        // 카드 위치 계산 - 화면 높이와 그래프 위치에 따라 동적으로 조정
         let yOffset;
-        if (index === 0) {
-          // 1번 카드는 살짝 위로
+        
+        // 카드 배치 로직 - 간단하고 안정적으로
+        if (index === 0 || index === 1) {
+          // 첫 두 카드는 위쪽에 배치
           yOffset = -45;
-        } else if (index < 5) {
-          // 2-5번: 상단 배치
+        } else if (index === 2 || index === 3) {
+          // 중간 카드들
           yOffset = -50;
+        } else if (index === 4) {
+          // 5번 카드 (첫 1등) - 그래프와 거의 같은 위치
+          yOffset = 2;
+        } else if (index === 5) {
+          // 6번 카드 - 그래프 위로 이동 (더 아래로 조정)
+          yOffset = -30;
+        } else if (index === 6) {
+          // 7번 카드 (2년 연속 1등) - 그래프 살짝 아래
+          yOffset = 18;
         } else {
-          // 6-8번: 하단 배치 (더 위로)
-          yOffset = 5;
+          // 8번 카드 - 그래프 살짝 아래
+          yOffset = 15;
+        }
+        
+        // 화면 크기에 따른 동적 조정 - 더 세밀하게
+        if (viewportHeight > 900) {
+          // 큰 화면에서는 간격을 넓게
+          if (yOffset < 0) {
+            yOffset = yOffset * 1.3;  // 위쪽 카드는 더 위로
+          } else {
+            yOffset = yOffset * 1.2;  // 아래쪽 카드는 약간만
+          }
+        } else if (viewportHeight > 700) {
+          // 중간 화면에서는 기본값 유지
+          yOffset = yOffset * 1.0;
+        } else if (viewportHeight > 600) {
+          // 작은 화면에서는 간격을 줄임
+          yOffset = yOffset * 0.85;
+        } else {
+          // 매우 작은 화면에서는 더 줄임
+          yOffset = yOffset * 0.7;
         }
         
         // 그래프 포인트의 실제 Y 위치 계산 (Canvas와 동일한 계산식)
-        const graphY = 100 - (event.growth / 300) * 60 - 20;
+        // 화면 높이의 80px를 X축용으로 확보, 상단 10px 여백
+        const chartHeightPercent = ((dimensions.height - 90) / dimensions.height) * 100;
+        const chartBottomPercent = ((dimensions.height - 80) / dimensions.height) * 100;
+        const graphY = chartBottomPercent - (event.growth / 300) * chartHeightPercent;
         
         return (
           <div
@@ -357,7 +416,7 @@ const Chart = () => {
             }}
           >
             {/* 순서 번호 */}
-            <div className={`absolute left-1/2 -translate-x-1/2 ${index < 5 ? '-top-8' : '-bottom-8'}`}>
+            <div className={`absolute left-1/2 -translate-x-1/2 ${(index === 4) ? '-bottom-8' : (yOffset < 0 ? '-top-8' : '-bottom-8')}`}>
               <div className="w-7 h-7 bg-gradient-to-br from-slate-700 to-slate-900 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
                 {event.order}
               </div>
