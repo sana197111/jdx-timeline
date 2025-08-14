@@ -358,8 +358,8 @@ const Chart = () => {
       {/* 이벤트 카드들 - 완전 재설계 */}
       {events.map((event, index) => {
         const isLarge = event.size === 'large';
-        // 모든 카드 넓이 통일
-        const cardWidth = 'w-72';
+        // 모든 카드 넓이 통일 - 크기 축소
+        const cardWidth = 'w-60';
         
         // 화면 높이에 따른 동적 카드 배치
         const viewportHeight = dimensions.height || 600;
@@ -424,8 +424,8 @@ const Chart = () => {
             }}
           >
             {/* 순서 번호 */}
-            <div className={`absolute left-1/2 -translate-x-1/2 ${(index === 4) ? '-bottom-8' : (yOffset < 0 ? '-top-8' : '-bottom-8')}`}>
-              <div className="w-7 h-7 bg-gradient-to-br from-slate-700 to-slate-900 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+            <div className={`absolute left-1/2 -translate-x-1/2 ${(index === 4) ? '-bottom-7' : (yOffset < 0 ? '-top-7' : '-bottom-7')}`}>
+              <div className="w-6 h-6 bg-gradient-to-br from-slate-700 to-slate-900 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
                 {event.order}
               </div>
             </div>
@@ -446,58 +446,58 @@ const Chart = () => {
             {/* 카드 */}
             <div 
               className={`
-                relative bg-white rounded-xl shadow-lg border overflow-hidden
+                relative bg-white rounded-lg shadow-md border overflow-hidden
                 ${cardWidth}
                 ${isLarge ? 'border-yellow-400 shadow-yellow-200/50' : 'border-slate-200'}
-                ${event.current ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                ${event.current ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
               `}
             >
               {/* 상단 바 */}
               <div 
-                className="h-2"
+                className="h-1.5"
                 style={{ backgroundColor: event.color }}
               />
 
-              <div className="p-4">
+              <div className="p-3">
                 {/* 헤더 */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">
                       {event.icon}
                     </span>
                     <div>
-                      <div className="text-sm font-bold text-slate-500">{event.year}</div>
-                      <h3 className="font-black text-slate-900 text-lg">
+                      <div className="text-xs font-bold text-slate-500">{event.year}</div>
+                      <h3 className="font-black text-slate-900 text-sm">
                         {event.title}
                       </h3>
                     </div>
                   </div>
                   {event.current && (
-                    <div className="bg-blue-100 px-2.5 py-1.5 rounded-full">
-                      <span className="text-sm font-bold text-blue-700">NOW</span>
+                    <div className="bg-blue-100 px-2 py-1 rounded-full">
+                      <span className="text-xs font-bold text-blue-700">NOW</span>
                     </div>
                   )}
                 </div>
 
                 {/* 설명 */}
-                <div className="mb-3">
-                  <div className="text-sm text-slate-700 font-medium leading-relaxed">
+                <div className="mb-2">
+                  <div className="text-xs text-slate-700 font-medium leading-relaxed">
                     {event.description}
                   </div>
                 </div>
 
                 {/* 주요 성과 */}
-                <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-3">
-                  <div className="text-sm text-slate-500 font-bold mb-1.5">핵심 성과</div>
-                  <div className="text-sm font-bold leading-relaxed" style={{ color: event.color }}>
+                <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-md p-2">
+                  <div className="text-xs text-slate-500 font-bold mb-1">핵심 성과</div>
+                  <div className="text-xs font-bold leading-relaxed" style={{ color: event.color }}>
                     {event.achievement}
                   </div>
                 </div>
 
                 {/* 하이라이트 메시지 */}
                 {event.highlight && (
-                  <div className="mt-3 p-2 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-lg border border-yellow-300">
-                    <div className="text-sm font-black text-yellow-800 text-center">
+                  <div className="mt-2 p-1.5 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-md border border-yellow-300">
+                    <div className="text-xs font-black text-yellow-800 text-center">
                       {event.order === 5 ? '🎯 첫 번째 정상 등극!' : '🎯 2년 연속 최고 기록!'}
                     </div>
                   </div>
