@@ -284,38 +284,46 @@ const Chart = () => {
         const centerX = Math.round(point.x);
         const centerY = Math.round(point.y);
         
-        // 외부 링 (정원으로 그리기)
+        // 외부 링 (정원으로 그리기 - 크기 축소)
         if (event.highlight) {
+          ctx.save();
           ctx.beginPath();
-          ctx.arc(centerX, centerY, 15, 0, Math.PI * 2, false);
+          ctx.arc(centerX, centerY, 12, 0, Math.PI * 2, false);
           ctx.strokeStyle = event.color;
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 2;
           ctx.stroke();
+          ctx.restore();
         }
         
-        // 메인 포인트 (정원으로 그리기)
+        // 메인 포인트 (정원으로 그리기 - 크기 축소)
+        ctx.save();
         ctx.beginPath();
-        ctx.arc(centerX, centerY, event.highlight ? 10 : 8, 0, Math.PI * 2, false);
+        ctx.arc(centerX, centerY, event.highlight ? 8 : 6, 0, Math.PI * 2, false);
         ctx.fillStyle = event.color;
         ctx.fill();
+        ctx.restore();
         
-        // 내부 점 (정원으로 그리기)
+        // 내부 점 (정원으로 그리기 - 크기 축소)
+        ctx.save();
         ctx.beginPath();
-        ctx.arc(centerX, centerY, event.highlight ? 5 : 4, 0, Math.PI * 2, false);
+        ctx.arc(centerX, centerY, event.highlight ? 4 : 3, 0, Math.PI * 2, false);
         ctx.fillStyle = 'white';
         ctx.fill();
+        ctx.restore();
       });
 
-      // 움직이는 포인트 (현재 위치 표시)
+      // 움직이는 포인트 (현재 위치 표시 - 크기 축소)
       const currentPoint = points[points.length - 3]; // 실제 마지막 이벤트 포인트
-      const pulseSize = 12 + Math.sin(timeRef.current * 3) * 3;
+      const pulseSize = 10 + Math.sin(timeRef.current * 3) * 2;
       const currentCenterX = Math.round(currentPoint.x);
       const currentCenterY = Math.round(currentPoint.y);
+      ctx.save();
       ctx.beginPath();
       ctx.arc(currentCenterX, currentCenterY, pulseSize, 0, Math.PI * 2, false);
       ctx.strokeStyle = '#F59E0B';
       ctx.lineWidth = 2;
       ctx.stroke();
+      ctx.restore();
 
       animationRef.current = requestAnimationFrame(animate);
     };
