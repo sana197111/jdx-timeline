@@ -36,7 +36,7 @@ const Chart = () => {
       icon: '💬',
       size: 'normal',
       description: '상담사 연결로 내면 상담 → 말씀 필요성 → 센터 신천지 오픈. 줌과 대면 병행',
-      achievement: '곽종렬 지파장님 청년 전도 바람. 전도가 조금씩 잘 되기 시작'
+      achievement: '지파장님 청년 전도 바람. 전도가 조금씩 잘 되기 시작'
     },
     {
       id: 'groearth',
